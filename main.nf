@@ -106,8 +106,10 @@ process makeTranscript {
     set pair_id, file('transcript_*.gtf') into transcripts
  
     """
+    pwd=`basename \${PWD} | cut -c1-6`
+    echo \$pwd
     cufflinks --no-update-check -q -p $task.cpus -G $annot $bam_file
-    mv transcripts.gtf transcript_${pair_id}.gtf
+    mv transcripts.gtf transcript_${pair_id}_\${pwd}.gtf
     """
 }
  
