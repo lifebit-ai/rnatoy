@@ -1,34 +1,23 @@
-FROM pditommaso/dkrbase:1.2
+FROM continuumio/miniconda3:v25.11.1
+LABEL name="quay.io/lifebitaiorg/rnatoy" \
+      description="A docker container for rnatoy pipeline" \
+      maintainer="David Pineyro <david.pineyro@lifebit.ai>"
 
-MAINTAINER Paolo Di Tommaso <paolo.ditommaso@gmail.com>
+RUN conda config --add channels defaults && \
+    conda config --add channels bioconda && \
+    conda config --add channels conda-forge
 
-#
-# Install pre-requistes
-#
-RUN apt-get update --fix-missing && \
-  apt-get install -q -y samtools python 
-  
-#
-# RNA-Seq tools 
-# 
+COPY environment.yml /
+ARG ENV_NAME="rnatoy"
+RUN conda env create -f environment.yml -n ${ENV_NAME} && \
+    conda clean -a
 
-RUN wget -q -O bowtie.zip https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.2.7/bowtie2-2.2.7-linux-x86_64.zip/download && \
-  unzip bowtie.zip -d /opt/ && \
-  ln -s /opt/bowtie2-2.2.7/ /opt/bowtie && \
-  rm bowtie.zip 
-  
-RUN \
-  wget -q http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/cufflinks-2.2.1.Linux_x86_64.tar.gz -O- \
-  | tar xz -C /opt/ && \
-  ln -s /opt/cufflinks-2.2.1.Linux_x86_64/ /opt/cufflinks 
-  
-  
-RUN \
-  wget -q https://ccb.jhu.edu/software/tophat/downloads/tophat-2.1.0.Linux_x86_64.tar.gz -O- \
-  | tar xz -C /opt/ && \
-  ln -s /opt/tophat-2.1.0.Linux_x86_64/ /opt/tophat 
-  
-#
-# Finalize environment
-#
-ENV PATH=$PATH:/opt/bowtie:/opt/tophat:/opt/cufflinks
+# Add conda installation dir to PATH
+ENV PATH /opt/conda/envs/${ENV_NAME}/bin:$PATH
+
+# Dump the details of the installed packages to a file for posterity
+RUN conda env export --name ${ENV_NAME} > ${ENV_NAME}_exported.yml
+
+CMD ["/bin/bash"]
+
+ENTRYPOINT [""]
